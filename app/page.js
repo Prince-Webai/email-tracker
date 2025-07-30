@@ -6,6 +6,7 @@ export default function Dashboard() {
   const [trackingData, setTrackingData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [lastUpdate, setLastUpdate] = useState(null);
   const [stats, setStats] = useState({
     totalOpens: 0,
     uniqueEmails: 0,
@@ -22,15 +23,34 @@ export default function Dashboard() {
   const loadTrackingData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/tracking');
-      const data = await response.json();
+      console.log('🔄 Fetching tracking data...');
+      
+      const response = await fetch('/api/tracking', {
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      
+      console.log('📡 Response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ API Error:', response.status, errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
 
-      if (response.ok) {
+      const data = await response.json();
+      console.log('✅ Data received:', data);
+
+      if (Array.isArray(data)) {
         setTrackingData(data);
         calculateStats(data);
         setError(null);
+        setLastUpdate(new Date().toLocaleTimeString());
       } else {
-        throw new Error(data.error || data.details || 'Failed to load data');
+        throw new Error('Invalid data format received');
       }
     } catch (error) {
       console.error('❌ Error loading tracking data:', error);
@@ -95,6 +115,11 @@ export default function Dashboard() {
           </h1>
           <p className="text-gray-600">
             Monitor your email open tracking in real-time
+            {lastUpdate && (
+              <span className="ml-2 text-sm text-blue-600">
+                (Last updated: {lastUpdate})
+              </span>
+            )}
           </p>
         </div>
 
@@ -203,7 +228,7 @@ export default function Dashboard() {
         <div className="bg-white shadow rounded-lg">
           <div className="px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">
-              Recent Email Opens
+              Recent Email Opens ({trackingData.length} total)
             </h3>
           </div>
           <div className="overflow-x-auto">
