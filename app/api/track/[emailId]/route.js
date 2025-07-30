@@ -38,26 +38,18 @@ export async function GET(request, { params }) {
       console.log(`✅ Tracked email open: ${emailId}`);
     }
 
-    // Check if this is a link click (has referer) or pixel load
-    const referer = request.headers.get('referer');
-    const isLinkClick = referer && referer.includes('gmail.com');
-
-    if (isLinkClick) {
-      // Redirect to a success page for link clicks
-      return Response.redirect('https://email-tracker-rqm19rvrc-gaurs-projects.vercel.app/tracked', 302);
-    } else {
-      // Return the transparent GIF for pixel loads
-      return new Response(transparentGif, {
-        status: 200,
-        headers: {
-          'Content-Type': 'image/gif',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET',
-          'Access-Control-Allow-Headers': 'Content-Type',
-        },
-      });
-    }
+    // Always return the transparent GIF for invisible tracking
+    // This works for both image requests and background-image CSS
+    return new Response(transparentGif, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/gif',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    });
 
   } catch (error) {
     console.error('❌ Tracking pixel error:', error);
